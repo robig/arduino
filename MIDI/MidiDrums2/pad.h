@@ -11,6 +11,7 @@
 class Pad
 {
   public:
+    Pad();
     Pad(int pin, int note, int chan /*, midi::MidiInterface &midi*/ );
     boolean process();
 

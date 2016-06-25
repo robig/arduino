@@ -1,6 +1,10 @@
 #include "Arduino.h"
 #include "pad.h"
 
+Pad::Pad(){
+  
+}
+
 Pad::Pad(int pin, int note, int chan)
 {
   _pin = pin;

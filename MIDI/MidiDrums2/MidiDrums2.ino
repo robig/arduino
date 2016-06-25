@@ -32,7 +32,8 @@ SoftwareSerial midiSerial(pinMidiIn, pinMidiOut); //Midi Port
 MIDI_CREATE_INSTANCE(SoftwareSerial, midiSerial, MIDI);
 
 /*Piezo piezo1(pinPiezo1);*/
-Pad pads[2];
+#define PADS 2
+Pad pads[PADS];
 
 void setup()
 {
@@ -46,13 +47,13 @@ void setup()
 
 void loop()
 {
-  for(int i=0; i<2; i++)
+  for(int i=0; i<PADS; i++)
   {
     if(pads[i].process())
     {
       int vel = pads[i].getVelocity();
-      if(vel>0) MIDI.sendNoteOn (pad[i].getNote(), vel, pad[i].getChannel());
-      else      MIDI.sendNoteOff(pad[i].getNote(), 0,   pad[i].getChannel());
+      if(vel>0) MIDI.sendNoteOn (pads[i].getNote(), vel, pads[i].getChannel());
+      else      MIDI.sendNoteOff(pads[i].getNote(), 0,   pads[i].getChannel());
     }
   }
   
