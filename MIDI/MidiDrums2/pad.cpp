@@ -28,7 +28,7 @@ boolean Pad::process()
   // query piezo sensor
   if (_piezo->isHit()) {
     _startMillis = millis();
-    _noteVelocity = map(_piezo->getRawValue(), 0, _mapmax, 0, 127);
+    _noteVelocity = mapRawValue(_piezo->getRawValue()); //map(_piezo->getRawValue(), 0, _mapmax, 0, 127);
     if (_noteVelocity > 127) _noteVelocity = 127;
     if(_logging) { Serial.print("Note On "); Serial.print(_note); Serial.print(" "); Serial.println(_noteVelocity); }
     //_midi.sendNoteOn(_note, _noteVelocity, _channel);
@@ -43,6 +43,21 @@ boolean Pad::process()
     return true;
   }
   return false;
+}
+
+int Pad::mapRawValue(int raw)
+{
+  return map(raw, 0, _mapmax, 0, 127);
+}
+
+void Pad::setMapMaxValue(int raw)
+{
+  _mapmax = raw;
+}
+
+int Pad::getMapMaxValue()
+{
+  return _mapmax;
 }
 
 int Pad::getNote()

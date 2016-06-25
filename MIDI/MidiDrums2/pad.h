@@ -22,6 +22,10 @@ class Pad
     Piezo *getPiezo();
     
     void setRelease(int releaseTime);
+    void setMapMaxValue(int raw);
+    int getMapMaxValue();
+
+    int mapRawValue(int raw);
 
     void enableLogging(boolean dbg);
   private:
@@ -37,6 +41,8 @@ class Pad
     Piezo *_piezo;
 
     boolean _logging;
+
+    
 };
 
 #endif

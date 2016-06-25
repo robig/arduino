@@ -68,7 +68,8 @@ void loop()
   }
   
   int potiRaw = analogRead(pinPoti);
-  float thres = pads[0].getPiezo()->getThreshold();
+  /** for controlling trigger threshold with poti **/
+  /*float thres = pads[0].getPiezo()->getThreshold();
   pads[0].getPiezo()->setThresholdRaw(potiRaw);
   #ifdef DEBUG
   if(abs(pads[0].getPiezo()->getThreshold() - thres) > 0.01)
@@ -76,5 +77,16 @@ void loop()
   Serial.print("Poti "); Serial.println(pads[0].getPiezo()->getThreshold());
   }
   #endif
+  */
+
+  /** for controlling velocity mapping with poti **/
+  #ifdef DEBUG
+  if(abs(pads[0].getMapMaxValue() - potiRaw) > 3)
+  {
+  Serial.print("Poti "); Serial.println(potiRaw);
+  }
+  #endif
+  pads[0].setMapMaxValue(potiRaw);
+  
 }
 
