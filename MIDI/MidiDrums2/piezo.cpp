@@ -24,6 +24,17 @@ void Piezo::setThreshold(float volt)
   _threshold = volt;
 }
 
+float Piezo::getThreshold()
+{
+  return _threshold;
+}
+
+void Piezo::setThresholdRaw(int raw)
+{
+  float volt = raw * (5.0 / 1023.0);
+  setThreshold(volt);
+}
+
 void Piezo::setRelease(int releaseTime)
 {
   if(releaseTime < 0 || releaseTime > 1000) return;

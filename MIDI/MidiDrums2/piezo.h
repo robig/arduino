@@ -14,6 +14,8 @@ class Piezo
     float getValue();
     int getRawValue();
     void setThreshold(float volt);
+    float getThreshold();
+    void setThresholdRaw(int raw);
     void setRelease(int releaseTime);
   private:
     int _pin;

@@ -22,6 +22,8 @@ class Pad
     Piezo *getPiezo();
     
     void setRelease(int releaseTime);
+
+    void enableLogging(boolean dbg);
   private:
     int _pin;
     int _note;
@@ -33,7 +35,8 @@ class Pad
     
     //midi::MidiInterface _midi;
     Piezo *_piezo;
-    
+
+    boolean _logging;
 };
 
 #endif

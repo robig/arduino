@@ -7,7 +7,6 @@
 #include <midi_Message.h>
 #include <midi_Namespace.h>
 #include <midi_Settings.h>
-#include <SoftwareSerial.h>
 #include "pad.h"
 
 // configuration:
@@ -23,13 +22,21 @@ const int noteValue = 32;
 const long noteDuration = 50; //ms
 const long velo_mapmax = 1023;
 
+#define DEBUG
+
 int ledState = LOW;
 unsigned long startMillis = 0;
 unsigned long currentMillis = 0;
 int noteVelocity = 0;
 
+#ifdef DEBUG
+#include <SoftwareSerial.h>
 SoftwareSerial midiSerial(pinMidiIn, pinMidiOut); //Midi Port
 MIDI_CREATE_INSTANCE(SoftwareSerial, midiSerial, MIDI);
+#endif
+#ifndef DEBUG
+MIDI_CREATE_DEFAULT_INSTANCE();
+#endif
 
 /*Piezo piezo1(pinPiezo1);*/
 #define PADS 2
@@ -42,7 +49,10 @@ void setup()
   pads[1] = Pad(pinPiezo2, noteValue+2, midiChan);
   
   //pinMode(pinLed, OUTPUT); // declare the ledPin as as OUTPUT
-  //Serial.begin(9600);       // use the serial port
+  #ifdef DEBUG
+    Serial.begin(9600);
+    pads[0].enableLogging(true);
+  #endif
 }
 
 void loop()
@@ -57,31 +67,14 @@ void loop()
     }
   }
   
-  // query piezo1 sensor
-  /*if (piezo1.isHit()) {
-    // toggle the status of the ledPin:
-    ledState = !ledState;
-    // update the LED pin itself:
-    digitalWrite(pinLed, ledState);
-
-    int potiRaw = analogRead(pinPoti);
-    Serial.print("Poti "); Serial.println(potiRaw);
-
-    startMillis = millis();
-    noteVelocity = map(piezo1.getRawValue(), 0, potiRaw, 0, 127);
-    if (noteVelocity > 127) noteVelocity = 127;
-    Serial.print("Note On "); Serial.print(noteValue); Serial.print(" "); Serial.println(noteVelocity);
-    MIDI.sendNoteOn(noteValue, noteVelocity, midiChan);
+  int potiRaw = analogRead(pinPoti);
+  float thres = pads[0].getPiezo()->getThreshold();
+  pads[0].getPiezo()->setThresholdRaw(potiRaw);
+  #ifdef DEBUG
+  if(abs(pads[0].getPiezo()->getThreshold() - thres) > 0.01)
+  {
+  Serial.print("Poti "); Serial.println(pads[0].getPiezo()->getThreshold());
   }
-
-  currentMillis = millis();
-  if (noteVelocity > 0 && currentMillis - startMillis >= noteDuration) {
-
-    MIDI.sendNoteOff(noteValue, 0, midiChan);
-    Serial.println("Note Off");
-    noteVelocity = 0;
-  }*/
-
-  //delay(100);  // delay to avoid overloading the serial port buffer
+  #endif
 }
 
