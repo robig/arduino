@@ -1,5 +1,5 @@
 /*
-  Morse.h - Library piezo sensor
+  pad.h - Library for drum pad using piezo sensor (and piezo library)
 */
 #ifndef Pad_h
 #define Pad_h

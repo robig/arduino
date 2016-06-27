@@ -12,7 +12,7 @@ Piezo::Piezo(int pin)
   //pinMode(pin, INPUT);
   _pin = pin;
   _threshold = 0.43; //default threshold
-  _release = 50; // default release time
+  _release = 60; // default release time
   _lastHit = 0;
   _sensorRaw = 0;
   _sensVolt = 0;
