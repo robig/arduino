@@ -14,16 +14,17 @@ Switch::Switch(int pin)
 void Switch::process()
 {
   unsigned long currentMillis = millis();
-
+  _statechange = false;
+  
   if (currentMillis - _previousMillis >= _release) {
-    // save the last time you blinked the LED
     _previousMillis = currentMillis;
 
-    // Button for calibration mode
+    // read Button 
     _value = digitalRead(_pin);
     if(_value == LOW && _value != _lastValue)
     {
       _state=!_state;
+      _statechange = true;
       #ifdef DEBUG
       Serial.print("Mode="); Serial.println(_state);
       #endif
@@ -36,6 +37,11 @@ void Switch::process()
 int Switch::getState()
 {
   return _state;
+}
+
+boolean Switch::stateChanged()
+{
+  return _statechange;
 }
 
 boolean Switch::isHIGH()

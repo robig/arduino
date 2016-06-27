@@ -7,6 +7,9 @@
 #include <midi_Message.h>
 #include <midi_Namespace.h>
 #include <midi_Settings.h>
+
+//#define DEBUG
+
 #include "pad.h"
 #include "blinker.h"
 #include "switch.h"
@@ -25,15 +28,10 @@ const int noteValue = 32;
 const long noteDuration = 50; //ms
 const long velo_mapmax = 1023;
 
-#define DEBUG
+int calibrationMode = LOW; //remove me
 
-int calibrationMode = LOW;
-unsigned long startMillis = 0;
-unsigned long currentMillis = 0;
 int noteVelocity = 0;
-int buttonState = 0;
-int lastButtonState = 0;
-int maxRawValue = 0;
+int maxRawValue = 1;
 
 #ifdef DEBUG
 #include <SoftwareSerial.h>
@@ -73,13 +71,16 @@ void loop()
       noteVelocity = pads[i].getVelocity();
       if(noteVelocity>0) MIDI.sendNoteOn (pads[i].getNote(), noteVelocity, pads[i].getChannel());
       else               MIDI.sendNoteOff(pads[i].getNote(), 0,            pads[i].getChannel());
-      if(noteVelocity>0 && calibrationMode == HIGH)
+      
+      if(noteVelocity>0 && modeSw.isHIGH()) //calibration
       {
         //maxRawValue = max(maxRawValue, pads[i].getPiezo()->getRawValue());
         if(pads[i].getPiezo()->getRawValue() > maxRawValue)
         {
           maxRawValue = pads[i].getPiezo()->getRawValue();
+          #ifdef DEBUG
           Serial.print("cal: "); Serial.println(maxRawValue);
+          #endif
           pads[0].setMapMaxValue(maxRawValue);
         }
       }
@@ -88,18 +89,11 @@ void loop()
   /****** end pads *****/
 
   // modeLed blinker
+  modeSw.process();
+  modeLed.setEnabled(modeSw.isHIGH());
   modeLed.process();
-
-  // Button for calibration mode
-  buttonState = digitalRead(pinButton);
-  if(buttonState == LOW && buttonState != lastButtonState)
-  {
-    calibrationMode=!calibrationMode;
-    Serial.print("Mode="); Serial.println(calibrationMode);
-    modeLed.setEnabled(calibrationMode == HIGH);
-    if(calibrationMode == HIGH) maxRawValue = 0;
-  }
-  lastButtonState = buttonState;
+  if(modeSw.isHIGH() && modeSw.stateChanged()) maxRawValue = 1; //reset to minimum value
+  
 
   if(calibrationMode == 3) //poti disabled for now
   {

@@ -16,6 +16,7 @@ class Switch
 
     int getState();
     boolean isHIGH();
+    boolean stateChanged();
 
   private:
     int _pin;
@@ -23,6 +24,7 @@ class Switch
     int _state;
     int _value;
     int _lastValue;
+    boolean _statechange;
     unsigned long _previousMillis;
 };
 #endif
