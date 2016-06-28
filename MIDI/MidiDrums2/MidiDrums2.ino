@@ -8,16 +8,19 @@
 #include <midi_Namespace.h>
 #include <midi_Settings.h>
 
-//#define DEBUG
+#define DEBUG
+//#define DEBUG_NOMIDI
+#define LOGLEVEL LOG_LEVEL_DEBUG
 
+#include "logger.h"
 #include "pad.h"
 #include "blinker.h"
 #include "switch.h"
 
 // configuration:
 const int pinPoti = A0;
-const int pinMidiIn = 2;
-const int pinMidiOut = 3;
+const int pinDbgRx = 10;
+const int pinDbgTx = 11;
 const int pinPiezo1 = A2;
 const int pinPiezo2 = A3;
 const int pinLed = 13;
@@ -33,12 +36,9 @@ int calibrationMode = LOW; //remove me
 int noteVelocity = 0;
 int maxRawValue = 1;
 
-#ifdef DEBUG
-#include <SoftwareSerial.h>
-SoftwareSerial midiSerial(pinMidiIn, pinMidiOut); //Midi Port
-MIDI_CREATE_INSTANCE(SoftwareSerial, midiSerial, MIDI);
-#endif
-#ifndef DEBUG
+#ifdef DEBUG_NOMIDI
+//TODO MIDI_CREATE_INSTANCE(SoftwareSerial, dbgSerial, MIDI);
+#else
 MIDI_CREATE_DEFAULT_INSTANCE();
 #endif
 
@@ -56,7 +56,8 @@ void setup()
   
   //pinMode(pinLed, OUTPUT); // declare the ledPin as as OUTPUT
   #ifdef DEBUG
-    Serial.begin(9600);
+    Log.Init(LOGLEVEL, 9600, pinDbgRx, pinDbgTx);
+    Log.Info("Inizialized and ready");
     pads[0].enableLogging(true);
   #endif
 }
@@ -79,7 +80,7 @@ void loop()
         {
           maxRawValue = pads[i].getPiezo()->getRawValue();
           #ifdef DEBUG
-          Serial.print("cal: "); Serial.println(maxRawValue);
+          Log.Info("cal: %i", maxRawValue);
           #endif
           pads[0].setMapMaxValue(maxRawValue);
         }

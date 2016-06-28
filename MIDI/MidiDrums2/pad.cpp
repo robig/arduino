@@ -18,7 +18,6 @@ Pad::Pad(int pin, int note, int chan)
   _noteVelocity = 0;
   _mapmax = 173; //Per poti ermittelt
 
-  /*Serial.begin(9600);*/
   _logging=false;
 }
 
@@ -30,15 +29,15 @@ boolean Pad::process()
     _startMillis = millis();
     _noteVelocity = mapRawValue(_piezo->getRawValue()); //map(_piezo->getRawValue(), 0, _mapmax, 0, 127);
     if (_noteVelocity > 127) _noteVelocity = 127;
-    if(_logging) { Serial.print("Note On "); Serial.print(_note); Serial.print(" "); Serial.println(_noteVelocity); }
+    if(_logging) { Log.Debug("Note On %i $i", _note, _noteVelocity); }
     //_midi.sendNoteOn(_note, _noteVelocity, _channel);
     return true;
   }
 
   unsigned long now = millis();
-  if (_noteVelocity > 0 && now - _startMillis >= _release) {
-    //_midi.sendNoteOff(_note, 0, _channel);
-    if(_logging) Serial.println("Note Off");
+  if (_noteVelocity > 0 && now - _startMillis >= _release)
+  {
+    if(_logging) Log.Debug("Note Off");
     _noteVelocity = 0;
     return true;
   }

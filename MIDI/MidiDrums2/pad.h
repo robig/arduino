@@ -6,7 +6,7 @@
 
 #include "Arduino.h"
 #include "piezo.h"
-
+#include "logger.h"
 
 class Pad
 {
@@ -41,8 +41,6 @@ class Pad
     Piezo *_piezo;
 
     boolean _logging;
-
-    
 };
 
 #endif
