@@ -114,9 +114,8 @@ void Logger::print(const char *format, va_list args) {
 
     }
     _serial->print(*format);
-
-    _serial->println();
   }
+  _serial->println();
 }
 
 Logger Log = Logger();

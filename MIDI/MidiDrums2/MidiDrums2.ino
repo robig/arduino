@@ -24,7 +24,7 @@ const int pinDbgTx = 11;
 const int pinPiezo1 = A2;
 const int pinPiezo2 = A3;
 const int pinLed = 13;
-const int pinButton = 10;
+const int pinButton = 2;
 
 const int midiChan = 10;
 const int noteValue = 32;

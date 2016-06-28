@@ -29,7 +29,7 @@ boolean Pad::process()
     _startMillis = millis();
     _noteVelocity = mapRawValue(_piezo->getRawValue()); //map(_piezo->getRawValue(), 0, _mapmax, 0, 127);
     if (_noteVelocity > 127) _noteVelocity = 127;
-    if(_logging) { Log.Debug("Note On %i $i", _note, _noteVelocity); }
+    if(_logging) { Log.Debug("Note On %i %i", _note, _noteVelocity); }
     //_midi.sendNoteOn(_note, _noteVelocity, _channel);
     return true;
   }
