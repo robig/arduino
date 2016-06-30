@@ -1,12 +1,21 @@
 /* MIDI Drums v2
 
 */
+//MIDI note defines for each trigger
+#define SNARE_NOTE 38
+#define LTOM_NOTE 71
+#define RTOM_NOTE 72
+#define LCYM_NOTE 73
+#define RCYM_NOTE 74
+#define KICK_NOTE 36
 
-#include <MIDI.h>
-#include <midi_Defs.h>
-#include <midi_Message.h>
-#include <midi_Namespace.h>
-#include <midi_Settings.h>
+//MIDI defines
+#define NOTE_ON_CMD 0x90
+#define NOTE_OFF_CMD 0x80
+#define MAX_MIDI_VELOCITY 127
+
+//MIDI baud rate
+#define SERIAL_RATE 31250
 
 #define DEBUG
 //#define DEBUG_NOMIDI
@@ -38,40 +47,46 @@ int maxRawValue = 1;
 
 #ifdef DEBUG_NOMIDI
 //TODO MIDI_CREATE_INSTANCE(SoftwareSerial, dbgSerial, MIDI);
-#else
-MIDI_CREATE_DEFAULT_INSTANCE();
 #endif
 
-/*Piezo piezo1(pinPiezo1);*/
+// number of drum pads
 #define PADS 2
+
 Pad pads[PADS];
 Blinker modeLed(pinLed);
 Switch modeSw(pinButton);
 
 void setup()
 {
+  Serial.begin(SERIAL_RATE);
+  
   //setup pads
-  pads[0] = Pad(pinPiezo1, noteValue, midiChan); 
-  pads[1] = Pad(pinPiezo2, noteValue+2, midiChan);
+  pads[0] = Pad(pinPiezo1, SNARE_NOTE, midiChan); 
+  pads[1] = Pad(pinPiezo2, KICK_NOTE,  midiChan);
   
   //pinMode(pinLed, OUTPUT); // declare the ledPin as as OUTPUT
   #ifdef DEBUG
     Log.Init(LOGLEVEL, 9600, pinDbgRx, pinDbgTx);
     Log.Info("Inizialized and ready");
     pads[0].enableLogging(true);
+    pads[1].enableLogging(true);
   #endif
 }
 
 void loop()
 {
-  /***** Piezo Pad logic: *****/
+  /***** Drum Pad logic: *****/
   for(int i=0; i<PADS; i++)
   {
     if(pads[i].process())
     {
       noteVelocity = pads[i].getVelocity();
-      if(noteVelocity>0) MIDI.sendNoteOn (pads[i].getNote(), noteVelocity, pads[i].getChannel());
-      else               MIDI.sendNoteOff(pads[i].getNote(), 0,            pads[i].getChannel());
+      Log.Debug("#%i velocity=%i", i, noteVelocity);
+      if(noteVelocity>0)
+      {
+        midiNoteOn (pads[i].getNote(), noteVelocity); //todo , pads[i].getChannel());
+        midiNoteOff(pads[i].getNote(), 0           ); //  pads[i].getChannel());
+      }
       
       if(noteVelocity>0 && modeSw.isHIGH()) //calibration
       {
@@ -93,7 +108,11 @@ void loop()
   modeSw.process();
   modeLed.setEnabled(modeSw.isHIGH());
   modeLed.process();
-  if(modeSw.isHIGH() && modeSw.stateChanged()) maxRawValue = 1; //reset to minimum value
+  if(modeSw.isHIGH() && modeSw.stateChanged())
+  {
+    Log.Info("MODE active. calibrate now.");
+    maxRawValue = 1; //reset to minimum value
+  }
   
 
   if(calibrationMode == 3) //poti disabled for now
@@ -120,5 +139,29 @@ void loop()
     #endif
     pads[0].setMapMaxValue(potiRaw);
   }
+}
+
+void noteFire(unsigned short note, unsigned short velocity)
+{ 
+  midiNoteOn(note, velocity);
+  midiNoteOff(note, velocity);
+}
+
+void midiNoteOn(byte note, byte velocity)
+{
+  if(velocity > MAX_MIDI_VELOCITY)
+    velocity = MAX_MIDI_VELOCITY;
+  Serial.write(NOTE_ON_CMD);
+  Serial.write(note);
+  Serial.write(velocity);
+}
+
+void midiNoteOff(byte note, byte velocity)
+{
+  if(velocity > MAX_MIDI_VELOCITY)
+    velocity = MAX_MIDI_VELOCITY;
+  Serial.write(NOTE_OFF_CMD);
+  Serial.write(note);
+  Serial.write(velocity);
 }
 

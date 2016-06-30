@@ -12,7 +12,7 @@ class Pad
 {
   public:
     Pad();
-    Pad(int pin, int note, int chan /*, midi::MidiInterface &midi*/ );
+    Pad(int pin, int note, int chan);
     boolean process();
 
     int getNote();
@@ -28,6 +28,8 @@ class Pad
     int mapRawValue(int raw);
 
     void enableLogging(boolean dbg);
+
+    void resetBuffer();
   private:
     int _pin;
     int _note;
@@ -36,11 +38,14 @@ class Pad
     int _noteVelocity;
     int _mapmax;
     unsigned long _startMillis;
+
+    unsigned short _buffer[];
+    unsigned short _bufferIndex;
+    unsigned short _bufferMax;
     
-    //midi::MidiInterface _midi;
     Piezo *_piezo;
 
-    boolean _logging;
+    boolean _logging;    
 };
 
 #endif

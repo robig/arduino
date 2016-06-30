@@ -8,12 +8,12 @@
 
 // libraries
 
-#include <SoftwareSerial.h>
+//#include <SoftwareSerial.h>
 
 // We will use the SoftwareSerial library instead of the Serial library, as this will let us control which pins our MIDI interface is connected to.
-SoftwareSerial mySerial(2, 3); // RX, TX
+//SoftwareSerial mySerial(0, 1); // RX, TX
 
-
+mySerial Serial;
 
 // constants
 

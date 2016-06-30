@@ -1,6 +1,8 @@
 #include "Arduino.h"
 #include "pad.h"
 
+#define SIGNAL_BUFFER_SIZE 100
+
 Pad::Pad(){
   
 }
@@ -19,29 +21,42 @@ Pad::Pad(int pin, int note, int chan)
   _mapmax = 173; //Per poti ermittelt
 
   _logging=false;
+
+  // setup buffer:
+  _bufferMax = 0;
 }
 
     
 boolean Pad::process()
 {
+  boolean ret = false;
   // query piezo sensor
-  if (_piezo->isHit()) {
+  unsigned short newSignal = _piezo->getRawValue();
+  //_buffer[_bufferIndex] = newSignal;
+  if(newSignal > _bufferMax)
+  {
+    _bufferMax = newSignal;
     _startMillis = millis();
-    _noteVelocity = mapRawValue(_piezo->getRawValue()); //map(_piezo->getRawValue(), 0, _mapmax, 0, 127);
+  }
+  
+  if (!_piezo->isHit()) //value < threshold, so we maybe got a peak lately
+  {
+    _noteVelocity = mapRawValue(_bufferMax);
     if (_noteVelocity > 127) _noteVelocity = 127;
-    if(_logging) { Log.Debug("Note On %i %i", _note, _noteVelocity); }
-    //_midi.sendNoteOn(_note, _noteVelocity, _channel);
-    return true;
+    if(_logging) { Log.Debug("Note On %i %i %i", _pin, _note, _noteVelocity); }
+    resetBuffer();
+    ret = true;
   }
 
-  unsigned long now = millis();
-  if (_noteVelocity > 0 && now - _startMillis >= _release)
-  {
-    if(_logging) Log.Debug("Note Off");
-    _noteVelocity = 0;
-    return true;
-  }
-  return false;
+  _bufferIndex++;
+  if(_bufferIndex == SIGNAL_BUFFER_SIZE) _bufferIndex = 0;
+  return ret;
+}
+
+void Pad::resetBuffer()
+{
+  _bufferMax = 0;
+  _bufferIndex = 0;
 }
 
 int Pad::mapRawValue(int raw)
