@@ -39,7 +39,7 @@ boolean Pad::process()
     _startMillis = millis();
   }
   
-  if (!_piezo->isHit()) //value < threshold, so we maybe got a peak lately
+  if (!_piezo->isHit() && _bufferMax > _piezo->getThreshold()) //value < threshold, so we maybe got a peak lately
   {
     _noteVelocity = mapRawValue(_bufferMax);
     if (_noteVelocity > 127) _noteVelocity = 127;
@@ -77,6 +77,11 @@ int Pad::getMapMaxValue()
 int Pad::getNote()
 {
   return _note;
+}
+
+void Pad::setNote(int note)
+{
+  _note = note;
 }
 
 int Pad::getChannel()

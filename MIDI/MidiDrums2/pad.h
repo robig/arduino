@@ -15,6 +15,7 @@ class Pad
     Pad(int pin, int note, int chan);
     boolean process();
 
+    void setNote(int note);
     int getNote();
     int getChannel();
     int getVelocity();

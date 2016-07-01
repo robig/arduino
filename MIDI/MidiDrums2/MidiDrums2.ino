@@ -9,6 +9,9 @@
 #define RCYM_NOTE 74
 #define KICK_NOTE 36
 
+#define MIN_NOTE 35
+#define MAX_NOTE 81
+
 //MIDI defines
 #define NOTE_ON_CMD 0x90
 #define NOTE_OFF_CMD 0x80
@@ -25,20 +28,23 @@
 #include "pad.h"
 #include "blinker.h"
 #include "switch.h"
+#include "button.h"
 
 // configuration:
-const int pinPoti = A0;
-const int pinDbgRx = 10;
-const int pinDbgTx = 11;
+const int pinPoti   = A0;
+const int pinDbgRx  = 10;
+const int pinDbgTx  = 11;
 const int pinPiezo1 = A2;
 const int pinPiezo2 = A3;
-const int pinLed = 13;
+const int pinLed    = 13;
 const int pinButton = 2;
 
+const int pinNoteButtonNext  = 3;
+const int pinNoteButtonRaise = 4;
+const int pinNoteButtonLower = 5;
+
 const int midiChan = 10;
-const int noteValue = 32;
 const long noteDuration = 50; //ms
-const long velo_mapmax = 1023;
 
 int calibrationMode = LOW; //remove me
 
@@ -55,6 +61,12 @@ int maxRawValue = 1;
 Pad pads[PADS];
 Blinker modeLed(pinLed);
 Switch modeSw(pinButton);
+
+//instrument selection
+unsigned short selectedPad = 0;
+Button buttonNext(pinNoteButtonNext);
+Button buttonRaise(pinNoteButtonRaise);
+Button buttonLower(pinNoteButtonLower);
 
 void setup()
 {
@@ -104,6 +116,7 @@ void loop()
   }
   /****** end pads *****/
 
+  /** calibration mode stuff **/
   // modeLed blinker
   modeSw.process();
   modeLed.setEnabled(modeSw.isHIGH());
@@ -113,7 +126,34 @@ void loop()
     Log.Info("MODE active. calibrate now.");
     maxRawValue = 1; //reset to minimum value
   }
-  
+
+  /** switch instrument **/
+  if(buttonNext.pressed())
+  {
+    selectedPad++;
+    if(selectedPad >= PADS) selectedPad = 0;
+    #ifdef DEBUG
+    Log.Debug("selected Pad %i", selectedPad);
+    #endif
+  }
+  if(buttonRaise.pressed())
+  {
+    int note = pads[selectedPad].getNote() + 1;
+    if(note > MAX_NOTE) note = MIN_NOTE;
+    pads[selectedPad].setNote(note);
+    #ifdef DEBUG
+    Log.Debug(" Pad %i playes note %i", selectedPad, note);
+    #endif
+  }
+  if(buttonLower.pressed())
+  {
+    int note = pads[selectedPad].getNote() - 1;
+    if(note < MIN_NOTE) note = MAX_NOTE;
+    pads[selectedPad].setNote(note);
+    #ifdef DEBUG
+    Log.Debug(" Pad %i playes note %i", selectedPad, note);
+    #endif
+  }  
 
   if(calibrationMode == 3) //poti disabled for now
   {
