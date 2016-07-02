@@ -43,6 +43,7 @@ class Pad
     unsigned short _buffer[];
     unsigned short _bufferIndex;
     unsigned short _bufferMax;
+    unsigned short _bufferPos;
     
     Piezo *_piezo;
 

@@ -36,7 +36,7 @@ const int pinDbgRx  = 10;
 const int pinDbgTx  = 11;
 const int pinPiezo1 = A2;
 const int pinPiezo2 = A3;
-const int pinLed    = 13;
+const int pinLed    = 8;
 const int pinButton = 2;
 
 const int pinNoteButtonNext  = 3;
@@ -93,7 +93,7 @@ void loop()
     if(pads[i].process())
     {
       noteVelocity = pads[i].getVelocity();
-      Log.Debug("#%i velocity=%i", i, noteVelocity);
+      //Log.Debug("#%i velocity=%i", i, noteVelocity);
       if(noteVelocity>0)
       {
         midiNoteOn (pads[i].getNote(), noteVelocity); //todo , pads[i].getChannel());

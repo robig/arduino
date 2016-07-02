@@ -15,7 +15,7 @@ Pad::Pad(int pin, int note, int chan)
   //_midi = midi;
   _piezo = new Piezo(_pin);
   
-  _release = 50; // default release time
+  _release = 20; // default release time
   _startMillis = 0;
   _noteVelocity = 0;
   _mapmax = 173; //Per poti ermittelt
@@ -24,6 +24,10 @@ Pad::Pad(int pin, int note, int chan)
 
   // setup buffer:
   _bufferMax = 0;
+  _bufferPos = 0;
+  /*for(int i=0;i<SIGNAL_BUFFER_SIZE;i++){
+    _buffer[i]=0;
+  }*/
 }
 
     
@@ -31,21 +35,27 @@ boolean Pad::process()
 {
   boolean ret = false;
   // query piezo sensor
-  unsigned short newSignal = _piezo->getRawValue();
+  unsigned short newSignal = 0;
+  if(_piezo->isHit()) newSignal = _piezo->getRawValue();
   //_buffer[_bufferIndex] = newSignal;
+  
   if(newSignal > _bufferMax)
   {
     _bufferMax = newSignal;
     _startMillis = millis();
   }
   
-  if (!_piezo->isHit() && _bufferMax > _piezo->getThreshold()) //value < threshold, so we maybe got a peak lately
+  if (newSignal == 0 && _bufferMax > 0) //value < threshold, maybe we got a peak lately
   {
-    _noteVelocity = mapRawValue(_bufferMax);
-    if (_noteVelocity > 127) _noteVelocity = 127;
-    if(_logging) { Log.Debug("Note On %i %i %i", _pin, _note, _noteVelocity); }
-    resetBuffer();
-    ret = true;
+    //if( (millis() - _startMillis) > _release )
+    if(true)
+    {
+      _noteVelocity = mapRawValue(_bufferMax);
+      if (_noteVelocity > 127) _noteVelocity = 127;
+      if(_logging) { Log.Debug("Note On %i %i %i", _pin, _note, _noteVelocity); }
+      resetBuffer();
+      ret = true;
+    }
   }
 
   _bufferIndex++;
