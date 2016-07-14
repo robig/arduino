@@ -3,7 +3,7 @@
 */
 //MIDI note defines for each trigger
 #define SNARE_NOTE 38
-#define LTOM_NOTE 71
+#define LTOM_NOTE 40
 #define RTOM_NOTE 72
 #define LCYM_NOTE 73
 #define RCYM_NOTE 74
@@ -36,8 +36,11 @@ const int pinDbgRx  = 10;
 const int pinDbgTx  = 11;
 const int pinPiezo1 = A2;
 const int pinPiezo2 = A3;
-const int pinLed    = 8;
-const int pinButton = 2;
+const int pinPiezo3 = A4;
+const int pinLed1   = 7;
+const int pinLed2   = 8;
+const int pinLed3   = 9;
+const int pinModeBtn = 2;
 
 const int pinNoteButtonNext  = 3;
 const int pinNoteButtonRaise = 4;
@@ -45,6 +48,8 @@ const int pinNoteButtonLower = 5;
 
 const int midiChan = 10;
 const long noteDuration = 50; //ms
+const int minInterval = 100; //ms
+const int maxInterval = 1000;
 
 int calibrationMode = LOW; //remove me
 
@@ -56,14 +61,16 @@ int maxRawValue = 1;
 #endif
 
 // number of drum pads
-#define PADS 2
+#define PADS 3
 
 Pad pads[PADS];
-Blinker modeLed(pinLed);
-Switch modeSw(pinButton);
+Blinker leds[PADS];
+Switch modeSw(pinModeBtn);
 
-//instrument selection
+//pad selector
 unsigned short selectedPad = 0;
+
+//coltrol buttons
 Button buttonNext(pinNoteButtonNext);
 Button buttonRaise(pinNoteButtonRaise);
 Button buttonLower(pinNoteButtonLower);
@@ -73,8 +80,14 @@ void setup()
   Serial.begin(SERIAL_RATE);
   
   //setup pads
-  pads[0] = Pad(pinPiezo1, SNARE_NOTE, midiChan); 
-  pads[1] = Pad(pinPiezo2, KICK_NOTE,  midiChan);
+  pads[0] = Pad(pinPiezo1, SNARE_NOTE, 0); 
+  pads[1] = Pad(pinPiezo2, KICK_NOTE,  1);
+  pads[2] = Pad(pinPiezo3, LTOM_NOTE,  2);
+
+  //setup leds
+  leds[0] = Blinker(pinLed1);
+  leds[1] = Blinker(pinLed2);
+  leds[2] = Blinker(pinLed3);
   
   //pinMode(pinLed, OUTPUT); // declare the ledPin as as OUTPUT
   #ifdef DEBUG
@@ -82,34 +95,41 @@ void setup()
     Log.Info("Inizialized and ready");
     pads[0].enableLogging(true);
     pads[1].enableLogging(true);
+    pads[2].enableLogging(true);
   #endif
 }
 
 void loop()
 {
+  unsigned short i=0;
   /***** Drum Pad logic: *****/
-  for(int i=0; i<PADS; i++)
+  for(i=0; i<PADS; i++)
   {
     if(pads[i].process())
     {
       noteVelocity = pads[i].getVelocity();
-      //Log.Debug("#%i velocity=%i", i, noteVelocity);
+      Log.Debug("#%i velocity=%i", i, noteVelocity);
       if(noteVelocity>0)
       {
+        //play a note
         midiNoteOn (pads[i].getNote(), noteVelocity); //todo , pads[i].getChannel());
         midiNoteOff(pads[i].getNote(), 0           ); //  pads[i].getChannel());
       }
       
-      if(noteVelocity>0 && modeSw.isHIGH()) //calibration
+      if(modeSw.isHIGH()) //calibration
       {
+        Log.Debug("pad=%i i=%i pads=%i", selectedPad, i, PADS);
         //maxRawValue = max(maxRawValue, pads[i].getPiezo()->getRawValue());
-        if(pads[i].getPiezo()->getRawValue() > maxRawValue)
+        //if(pads[i].getPiezo()->getRawValue() > maxRawValue)
+        if(selectedPad == i) //nur aktuelles pad einstellen
         {
-          maxRawValue = pads[i].getPiezo()->getRawValue();
+          int raw = pads[i].getRawValue();
+          int ms = map(127 - noteVelocity, 0, 127, minInterval, maxInterval);
           #ifdef DEBUG
-          Log.Info("cal: %i", maxRawValue);
+          Log.Info("cal: pad=%i max=%i ms=%i", selectedPad, raw, ms);
           #endif
-          pads[0].setMapMaxValue(maxRawValue);
+          pads[selectedPad].setMapMaxValue(raw);
+          
         }
       }
     }
@@ -117,13 +137,16 @@ void loop()
   /****** end pads *****/
 
   /** calibration mode stuff **/
-  // modeLed blinker
+  // mode switch
   modeSw.process();
-  modeLed.setEnabled(modeSw.isHIGH());
-  modeLed.process();
+  for(i=0; i<PADS; i++)
+  {
+    leds[i].process(); //led blinking
+    leds[i].setEnabled(modeSw.isHIGH() && selectedPad == i);
+  }
   if(modeSw.isHIGH() && modeSw.stateChanged())
   {
-    Log.Info("MODE active. calibrate now.");
+    Log.Info("MODE active. calibrate now. active pad: %i", selectedPad);
     maxRawValue = 1; //reset to minimum value
   }
 
@@ -136,48 +159,47 @@ void loop()
     Log.Debug("selected Pad %i", selectedPad);
     #endif
   }
-  if(buttonRaise.pressed())
+  if(!modeSw.isHIGH())
   {
-    int note = pads[selectedPad].getNote() + 1;
-    if(note > MAX_NOTE) note = MIN_NOTE;
-    pads[selectedPad].setNote(note);
-    #ifdef DEBUG
-    Log.Debug(" Pad %i playes note %i", selectedPad, note);
-    #endif
+    if(buttonRaise.pressed())
+    {
+      int note = pads[selectedPad].getNote() + 1;
+      if(note > MAX_NOTE) note = MIN_NOTE;
+      pads[selectedPad].setNote(note);
+      #ifdef DEBUG
+      Log.Debug(" Pad %i playes note %i", selectedPad, note);
+      #endif
+    }
+    if(buttonLower.pressed())
+    {
+      int note = pads[selectedPad].getNote() - 1;
+      if(note < MIN_NOTE) note = MAX_NOTE;
+      pads[selectedPad].setNote(note);
+      #ifdef DEBUG
+      Log.Debug(" Pad %i playes note %i", selectedPad, note);
+      #endif
+    }
   }
-  if(buttonLower.pressed())
+  else
   {
-    int note = pads[selectedPad].getNote() - 1;
-    if(note < MIN_NOTE) note = MAX_NOTE;
-    pads[selectedPad].setNote(note);
-    #ifdef DEBUG
-    Log.Debug(" Pad %i playes note %i", selectedPad, note);
-    #endif
-  }  
-
-  if(calibrationMode == 3) //poti disabled for now
-  {
-    int potiRaw = analogRead(pinPoti);
-    /** for controlling trigger threshold with poti **/
-    /*float thres = pads[0].getPiezo()->getThreshold();
-    pads[0].getPiezo()->setThresholdRaw(potiRaw);
-    #ifdef DEBUG
-    if(abs(pads[0].getPiezo()->getThreshold() - thres) > 0.01)
+    if(buttonRaise.pressed())
     {
-    Serial.print("Poti "); Serial.println(pads[0].getPiezo()->getThreshold());
+      int thr = pads[selectedPad].getPiezo()->getThreshold() + 1;
+      if(thr > 1023) thr = 1;
+      pads[selectedPad].getPiezo()->setThreshold(thr);
+      #ifdef DEBUG
+      Log.Debug(" Pad %i set threshold=%i", selectedPad, thr);
+      #endif
     }
-    #endif
-    */
-  
-    
-    /** for controlling velocity mapping with poti **/
-    #ifdef DEBUG
-    if(abs(pads[0].getMapMaxValue() - potiRaw) > 3)
+    if(buttonLower.pressed())
     {
-    Serial.print("Poti "); Serial.println(potiRaw);
+      int thr = pads[selectedPad].getPiezo()->getThreshold() - 1;
+      if(thr <= 1) thr = 1020;
+      pads[selectedPad].getPiezo()->setThreshold(thr);
+      #ifdef DEBUG
+      Log.Debug(" Pad %i set threshold=%i", selectedPad, thr);
+      #endif
     }
-    #endif
-    pads[0].setMapMaxValue(potiRaw);
   }
 }
 

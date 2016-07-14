@@ -36,13 +36,16 @@ boolean Pad::process()
   boolean ret = false;
   // query piezo sensor
   unsigned short newSignal = 0;
-  if(_piezo->isHit()) newSignal = _piezo->getRawValue();
+  unsigned short normSignal = 0;
+  if(_piezo->isHit()) normSignal = _piezo->getRawValue();
+  newSignal = _piezo->getRawValue();
   //_buffer[_bufferIndex] = newSignal;
   
-  if(newSignal > _bufferMax)
+  if(normSignal > _bufferMax)
   {
-    _bufferMax = newSignal;
+    _bufferMax = normSignal;
     _startMillis = millis();
+    if(_logging) { Log.Debug("RAW ch=%i A%i: %i", _channel, _pin, _bufferMax); }
   }
   
   if (newSignal == 0 && _bufferMax > 0) //value < threshold, maybe we got a peak lately
@@ -61,6 +64,11 @@ boolean Pad::process()
   _bufferIndex++;
   if(_bufferIndex == SIGNAL_BUFFER_SIZE) _bufferIndex = 0;
   return ret;
+}
+
+int Pad::getRawValue()
+{
+  return _bufferMax;
 }
 
 void Pad::resetBuffer()

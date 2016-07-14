@@ -11,16 +11,16 @@ class Piezo
   public:
     Piezo(int pin);
     boolean isHit();
-    float getValue();
+    float getVoltage();
     int getRawValue();
-    void setThreshold(float volt);
-    float getThreshold();
-    void setThresholdRaw(int raw);
+    void setThreshold(unsigned short volt);
+    unsigned short getThreshold();
+    
     void setRelease(int releaseTime);
   private:
     int _pin;
-    float _threshold;
-    int _release;
+    unsigned short _threshold;
+    unsigned short _release;
     long _lastHit;
     int _sensorRaw;
     float _sensVolt;

@@ -11,6 +11,7 @@
 class Blinker
 {
   public:
+    Blinker();
     Blinker(int pin);
     void process();
 

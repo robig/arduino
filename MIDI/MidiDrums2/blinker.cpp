@@ -1,6 +1,10 @@
 #include "Arduino.h"
 #include "blinker.h"
 
+Blinker::Blinker()
+{
+}
+
 Blinker::Blinker(int pin)
 {
   _enabled = false;

@@ -19,6 +19,8 @@ class Pad
     int getNote();
     int getChannel();
     int getVelocity();
+
+    int getRawValue();
     
     Piezo *getPiezo();
     

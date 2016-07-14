@@ -3,7 +3,7 @@
 
 /* Knock Sensor library 
    author: Robert Gröber
-   Version : 0.1
+   Version : 0.2
 */
 
 
@@ -11,28 +11,22 @@ Piezo::Piezo(int pin)
 {
   //pinMode(pin, INPUT);
   _pin = pin;
-  _threshold = 0.43; //default threshold
-  _release = 60; // default release time
+  _threshold = 5; //default threshold
+  _release = 10; // default release time
   _lastHit = 0;
   _sensorRaw = 0;
   _sensVolt = 0;
 }
 
-void Piezo::setThreshold(float volt)
+void Piezo::setThreshold(unsigned short value)
 {
-  if(volt < 0 || volt > 5) return;
-  _threshold = volt;
+  if(value < 0 || value > 1023) return;
+  _threshold = value;
 }
 
-float Piezo::getThreshold()
+unsigned short Piezo::getThreshold()
 {
   return _threshold;
-}
-
-void Piezo::setThresholdRaw(int raw)
-{
-  float volt = raw * (5.0 / 1023.0);
-  setThreshold(volt);
 }
 
 void Piezo::setRelease(int releaseTime)
@@ -50,10 +44,10 @@ boolean Piezo::isHit()
     // read the sensor and store it:
     _sensorRaw = analogRead(_pin);
     // calculate voltage
-    _sensVolt = _sensorRaw * (5.0 / 1023.0);
+    //_sensVolt = _sensorRaw * (5.0 / 1023.0);
   
     // if the sensor reading is greater than the threshold:
-    if (_sensVolt > _threshold) 
+    if (_sensorRaw > _threshold) 
     {
       _lastHit = now;
       return true;
@@ -67,7 +61,8 @@ int Piezo::getRawValue()
   return _sensorRaw;
 }
 
-float Piezo::getValue()
+float Piezo::getVoltage()
 {
+  _sensVolt = _sensorRaw * (5.0 / 1023.0);
   return _sensVolt;
 }
